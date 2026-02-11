@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نسك - Ahmed Reda</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --accent: #2563eb;
+            --warning: #dc2626;
+            --bg: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            padding: 50px 0;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            border-radius: 20px;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 3rem;
+            letter-spacing: 2px;
+        }
+
+        .search-box {
+            max-width: 600px;
+            margin: -30px auto 30px;
+            padding: 0 20px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 18px 25px;
+            border-radius: 50px;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            font-size: 18px;
+            outline: none;
+            text-align: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            max-width: 1200px;
+            margin: 0 auto;
+            flex: 1;
+        }
+
+        .card {
+            background: white;
+            padding: 25px 15px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 650px;
+            max-height: 90vh;
+            border-radius: 20px;
+            position: relative;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 22px;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+
+        .step-box {
+            background: #f1f5f9;
+            border-right: 5px solid var(--accent);
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+        }
+
+        .step-title {
+            font-weight: bold;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .special-step {
+            background: #fffbeb;
+            border-right-color: #f59e0b;
+        }
+
+        .alert-box {
+            background: #fef2f2;
+            border: 1px solid #fee2e2;
+            padding: 12px;
+            border-radius: 10px;
+            color: var(--warning);
+            font-weight: bold;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .mention-tag {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.1rem;
+            color: #64748b;
+            margin-top: 40px;
+        }
+
+        footer strong {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>نسك</h1>
+</header>
+
+<div class="search-box">
+    <input type="text" id="searchInput" placeholder="ابحث عن فندق..." onkeyup="filterHotels()">
+</div>
+
+<div class="grid" id="mainGrid"></div>
+
+<div id="hotelModal" class="modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-btn" onclick="closeModal()">✖</span>
+        <h2 id="mTitle" style="color:var(--primary); margin-bottom: 20px; text-align: center;"></h2>
+        <div id="mBody"></div>
+    </div>
+</div>
+
+<footer>
+    Made by <strong>Ahmed Reda</strong>
+</footer>
+
+<script>
+const hotels = [
+    { name: "اركان بكه", needsNeskBooking: true, type: "direct", mention: "مستر مصطفى أو إياد أو فادي" },
+    { name: "صفوت البيت المحبس الفندقية", needsNeskBooking: true, type: "direct", mention: "مستر مصطفى أو إياد أو فادي", note: "جروب حميدان مخصص لهذا الفندق" },
+    { name: "فندق برستيج", needsNeskBooking: true, type: "direct", mention: "مستر مصطفى أو إياد أو فادي" },
+    { name: "صفوت الخير", needsNeskBooking: true, type: "direct", mention: "مستر مصطفى أو إياد أو فادي" },
+    { name: "رواد المناسك", needsNeskBooking: true, type: "direct", mention: "مستر مصطفى أو إياد أو فادي" },
+    { name: "ميسان المقام", type: "direct", mention: "فادي أو مصطفى أو إياد أو أحمد" },
+    { name: "ميسان الملتزم", type: "direct", mention: "فادي أو مصطفى أو إياد أو أحمد" },
+    { name: "ميسان الزمرد", type: "direct", mention: "فادي أو مصطفى أو إياد أو أحمد" },
+    { name: "الزمرد (جروب)", type: "group", groupName: "الجروب الخاص", mention: "مصطفى أو إياد (عند طلب رقم الحجز)" },
+    { name: "الصلاح اجياد", type: "group", groupName: "مورو الصلاح اجياد 778", mention: "مصطفى أو إياد (عند طلب رقم الحجز)" },
+    { name: "بكة رويال", type: "group", groupName: "مورو بكة رويال 778", mention: "مصطفى أو إياد (عند طلب رقم الحجز)" },
+    { name: "بيوت الجزيرة", type: "group", groupName: "بيوت الجزيرة 981", mention: "مصطفى أو إياد (عند طلب رقم الحجز)" },
+    { name: "الجاد المحبس الفندقية", type: "group", groupName: "فنادق الجاد 916", mention: "مصطفى أو إياد (عند طلب رقم الحجز)" },
+    { name: "زهرة المدائن (الحرم والمحبس)", type: "group", groupName: "نسك مجموعة اورنسيس", mention: "مصطفى أو إياد (عند طلب رقم الحجز)" },
+    { name: "الارض المتميزة (المسفلة/الحفاير)", type: "group", groupName: "نسك الأرض + لؤلؤه التوحيد", mention: "مصطفى أو إياد (عند طلب رقم الحجز)" },
+    { name: "لؤلؤة التوحيد", type: "group", groupName: "نسك الأرض + لؤلؤه التوحيد", mention: "مصطفى أو إياد (عند طلب رقم الحجز)" },
+    { name: "ام القرى", type: "direct", mention: "مستر مصطفى أو إياد أو فادي", note: "جروب حميدان مخصص لهذا الفندق" }
+];
+
+function renderGrid() {
+    document.getElementById('mainGrid').innerHTML = hotels.map((h, i) => `
+        <div class="card" onclick="showHotel(${i})">
+            <h3>${h.name}</h3>
+        </div>
+    `).join('');
+}
+
+function showHotel(index) {
+    const h = hotels[index];
+    const modal = document.getElementById('hotelModal');
+    document.getElementById('mTitle').innerText = h.name;
+
+    let content = `
+        <div class="step-box"><span class="step-title">1. استلام الاتفاقية:</span> التأكد من وجود رقم الحجز.</div>
+        <div class="step-box"><span class="step-title">2. التحقق والمطابقة:</span> مطابقة البيانات مع السيستم.</div>
+        <div class="step-box"><span class="step-title">3. داخل الحجز:</span> إدخال رقم الاتفاقية (جزء نسك) + Client Remark (عدد ونوع الغرف).</div>
+    `;
+
+    if(h.type === 'group') {
+        content += `<div class="step-box"><span class="step-title">4. جهة الإرسال:</span> ترسل إلى جروب: <strong>${h.groupName}</strong></div>`;
+    }
+
+    content += `
+        <div class="step-box">
+            <span class="step-title">5. التوجيه (Mention):</span>
+            يتم عمل منشن لـ: <span class="mention-tag">${h.mention}</span>
+        </div>
+    `;
+
+    if(h.needsNeskBooking) {
+        content += `
+            <div class="step-box special-step">
+                <span class="step-title">6. عند الموافقة:</span>
+                ⚠️ يجب عمل <strong>حجز نسك</strong> فور الموافقة على الاتفاقية.
+            </div>
+        `;
+    }
+
+    if(h.note) content += `<div class="step-box" style="border-right-color:orange">ℹ️ <strong>ملاحظة:</strong> ${h.note}</div>`;
+
+    content += `<div class="alert-box">📢 تنبيه: اتفاقيات الأفراد لا تُعتمد إلا إذا كان الحجز مسدداً بالكامل.</div>`;
+
+    document.getElementById('mBody').innerHTML = content;
+    modal.style.display = 'flex';
+}
+
+function closeModal() { document.getElementById('hotelModal').style.display = 'none'; }
+
+function filterHotels() {
+    let input = document.getElementById('searchInput').value.toLowerCase().replace(/[أآإ]/g, 'ا');
+    let cards = document.getElementsByClassName('card');
+    for (let card of cards) {
+        let hotelName = card.innerText.toLowerCase().replace(/[أآإ]/g, 'ا');
+        card.style.display = hotelName.includes(input) ? "flex" : "none";
+    }
+}
+
+renderGrid();
+</script>
+
+</body>
+</html>
